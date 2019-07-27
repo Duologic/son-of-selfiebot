@@ -57,8 +57,6 @@ from pygame.locals import *
 
 import numpy as N
 
-from adxl345 import ADXL345
-
 
 ##############################################################
 #
@@ -80,8 +78,8 @@ pygame.camera.init()
 # FULLSCREEN MODE (Use when code is stable and you're ready to play! If you get stuck in FS mode, CTRL-ALT-F1 can get you to cmd line so that you can reboot gracefully)
 # WINDOWED MODE (Use when developing so crashes don't require reboot)
 
-display = pygame.display.set_mode((0,0),pygame.FULLSCREEN) #Fullscreen mode
-#display = pygame.display.set_mode((800,480), 0) # Windowed Mode
+#display = pygame.display.set_mode((0,0),pygame.FULLSCREEN) #Fullscreen mode
+display = pygame.display.set_mode((800,480), 0) # Windowed Mode
 
 
 
@@ -110,7 +108,6 @@ photoFileName = ""
 
 captureSoundSeq =1
 printSoundSeq = 1
-adxl345 = ADXL345()
 
 DEVICE = '/dev/video0'
 
@@ -311,9 +308,6 @@ sdKid.set_volume(1.0)
 sleepAngle = -.9
 laughAngle = -.6
 
-enterRestWait = 10
-exitRestWait = .1
-
 lookDirection=1
 lastLookTime = time.time()
 lookWait = 0
@@ -321,16 +315,9 @@ lookWait = 0
 lastWildTime = time.time()
 wildWaitTime = 6
 
-imuData = adxl345.getAxes(True)
-lastX = 0.01
-lastY = 0.01
-lastZ = 0.01
-
 nextSample = time.time()
-resting=False
 
 lastBlinkTime = time.time()
-lastRestState = False
 
 
 ###############################################################
@@ -467,58 +454,18 @@ def printSelfie(printFlag):
 ###############################################################
 
 def setExpression(mode):
-    global lastX, lastY, lastZ, nextSample, resting, lastBlinkTime, lastRestState, lookDirection, lastLookTime, lookWait, lastWildTime, wildWaitTime
+    global nextSample, lastBlinkTime, lookDirection, lastLookTime, lookWait, lastWildTime, wildWaitTime
 
     # ----------------------------------------------------- AWAKE ----------------------------
 
     if(mode==Expression.AWAKE) :
-        imuData = adxl345.getAxes(True)
-        #check the accel
-
         # show random looking directions at random intervals
         if(time.time() > lastLookTime +  lookWait):
             lookWait = random.random() * 1.5
             lookDirection = random.randint(1,5)
             lastLookTime = time.time()
 
-        restingThreshold = .1 # motion threshold
-
-        #goal: if bot left in same position for N seconds, switches faces
-        if(time.time() > nextSample):
-            imuData = adxl345.getAxes(True)
-                
-            if ( ( abs(imuData['x'] - lastX) < restingThreshold ) & ( abs(imuData['y'] - lastY) < restingThreshold ) & ( abs(imuData['z'] - lastZ) < restingThreshold ) ):
-                nextSample = time.time() + exitRestWait # Faster samplerate for leaving resting mode
-                resting=True
-            else:
-                nextSample = time.time() + enterRestWait # Long samplerate for entering resting mode
-                resting=False
-            lastX = imuData['x']
-            lastY = imuData['y']
-            lastZ = imuData['z']
-                
-        if(resting == True): # RESTING
-            display.blit(print7,(0,0))
-            lastRestState = True
-        else: # AWAKE, NOT RESTING
-            if (lastRestState == True): # jus woke up, Rest state is false (awake), but was just resting
-                #PLAY RANDOM SOUND
-                randSound = random.randint(1,5)
-                if(randSound == 1):
-                    miscBerp.play()
-                if (randSound == 2):
-                    miscHarro.play()
-                if (randSound == 3):
-                    miscQ.play()
-                if (randSound == 4):
-                    miscExit.play()
-                if (randSound == 5):
-                    miscEllo.play()
-                    
-                time.sleep(1.5) #how long blink stays on-screen
-                lastBlinkTime = time.time()
-                lastRestState = False
-
+        if True:
             if(lookDirection == 1) :
                 display.blit(f_LookLeft,(0,0))
             if(lookDirection == 2) :
@@ -566,17 +513,6 @@ def setExpression(mode):
                 time.sleep(.15) #how long blink stays on-screen
 
         pygame.display.flip()
-        
-        if(imuData['z'] < sleepAngle):
-            botMode = BotMode.SLEEPING
-            setExpression(Expression.SLEEPING)
-            botMode = BotMode.FACE
-
-        if( (imuData['y'] < laughAngle) | (imuData['y'] > -laughAngle) ):
-            setExpression(Expression.LAUGHING)
-
-        if(imuData['z'] > -sleepAngle):
-            setExpression(Expression.FACEDOWN)
 
 
     # ----------------------------------------------------- PROCESSING ----------------------------
@@ -659,56 +595,6 @@ def setExpression(mode):
             time.sleep(2)
 
 
-            #check the accel
-            imuData = adxl345.getAxes(True)
-            #print ("   x = %.3fG" % ( imuData['x'] ))
-            if(imuData['z'] < -sleepAngle):
-                isFaceDown = False
-                lastBlinkTime = time.time()
-                lastWildTime = time.time()
-
-
-            #see if bot has been moved
-            # if so, set flag to leave sleep loop
-
-    # ----------------------------------------------------- SLEEPING ----------------------------
-
-    if(mode==Expression.SLEEPING):
-
-        isSleeping = True
-        
-        # yawn face
-        display.blit(f_Oh,(0,0))
-        pygame.display.flip()
-        time.sleep(1)
-        
-        while isSleeping:
-           
-
-            # Sleepy ZZzzzzzz face
-            display.blit(print5,(0,0))
-            pygame.display.flip()
-            time.sleep(.2)
-        
-            display.blit(print6,(0,0))
-            pygame.display.flip()
-            time.sleep(.2)
-
-            display.blit(print62,(0,0))
-            pygame.display.flip()
-            time.sleep(.2)
-
-            #check the accel
-            imuData = adxl345.getAxes(True)
-            #print ("   x = %.3fG" % ( imuData['x'] ))
-            if(imuData['z'] > sleepAngle):
-                isSleeping = False
-                lastBlinkTime = time.time()
-                nextSample = time.time()
-
-            #see if bot has been moved
-            # if so, set flag to leave sleep loop
-            
 
 appRunning = True
 
