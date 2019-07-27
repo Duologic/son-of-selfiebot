@@ -12,13 +12,13 @@
 #
 #    Notes
 #
-#    If you downloaded and flashed the SelfieBot SD card image, 
+#    If you downloaded and flashed the SelfieBot SD card image,
 #    no additional setup is needed to use SelfieBot. Just run SelfieBot.py
 #
 #    The admin credentials are default: username 'pi' password 'raspberry'
 #
 #
-#    If you're setting this up from scratch, the libraries 
+#    If you're setting this up from scratch, the libraries
 #    referenced below will need to be installed and
 #    certain settings should be set in RPi configuration:
 #
@@ -92,7 +92,7 @@ class BotMode(Enum):
     CAMERA = 2
     SLEEPING = 3
 
-# Set initial bot's status flag 
+# Set initial bot's status flag
 botMode = BotMode.CAMERA;
 
 class Expression(Enum):
@@ -142,7 +142,7 @@ excitedFaceFile = pygame.image.load("./FaceImages/Excited.png")
 smile1 = pygame.Surface(display.get_size())
 #make it the right colorspace
 smile1 = smile1.convert()
-#put the image in to the surface 
+#put the image in to the surface
 smile1.blit(image1,(0,0))
 
 
@@ -230,7 +230,7 @@ print7 = print7.convert()
 print7.blit(image8,(0,0))
 
 
-# ------------ AUDIO FILES ---------------------------------- 
+# ------------ AUDIO FILES ----------------------------------
 
 shutterSound = pygame.mixer.Sound('Sounds/shutter.wav')
 shutterSound.set_volume(0.7)
@@ -322,7 +322,7 @@ lastBlinkTime = time.time()
 
 ###############################################################
 #
-# CAMERA CAPTURE FUNCTION 
+# CAMERA CAPTURE FUNCTION
 #
 ###############################################################
 
@@ -337,11 +337,11 @@ def captureImage():
         sdConf.play()
     if(captureSoundSeq == 3):
         sdBegin.play()
-    
+
     captureSoundSeq = captureSoundSeq + 1
     if(captureSoundSeq > 3):
-        captureSoundSeq = 1   
-    
+        captureSoundSeq = 1
+
     camera = pygame.camera.Camera(DEVICE, (800,480), "RGB")
     camera.start()
     sleep(.25)
@@ -391,7 +391,7 @@ def captureImage():
 
 ###############################################################
 #
-# IMAGE STUFF 
+# IMAGE STUFF
 #
 ###############################################################
 
@@ -416,7 +416,7 @@ def processImage():
 
 ###############################################################
 #
-# PRINTER STUFF 
+# PRINTER STUFF
 #
 ###############################################################
 
@@ -431,21 +431,21 @@ def printSelfie(printFlag):
             printPoop.play()
         if(printSoundSeq == 2):
             printDot.play()
-            
+
         printSoundSeq = printSoundSeq + 1
         if (printSoundSeq > 4):
             printSoundSeq = 1
-            
+
         conn = cups.Connection()
-        printers = conn.getPrinters()  
+        printers = conn.getPrinters()
         imageToPrint = Image.open("ProcessedImages/" + "Print" + photoFileName)
         imageToPrint = imageToPrint.transpose(Image.ROTATE_180)
         imageToPrint.save("PrintingTemp/" + "printthis.jpg")
         conn.printFile('zj-58', "PrintingTemp/" + "printthis.jpg",'Python_Status_print' ,{})
-        
+
         setExpression(Expression.PRINTGOING)
 
-            
+
 
 ###############################################################
 #
@@ -477,8 +477,8 @@ def setExpression(mode):
 
             if(time.time() > lastWildTime + wildWaitTime + random.randint(0,2)) :
                 randWildCard = random.randint(1,100)
-            
-                
+
+
                 if( (randWildCard > 90) & (randWildCard < 99) ):
                     display.blit(f_LaughBig,(0,0))
                     pygame.display.flip()
@@ -502,7 +502,7 @@ def setExpression(mode):
                     pygame.display.flip()
                     #thankyou.play()
                     time.sleep(1.5)
-                    
+
                 lastWildTime = time.time()
 
             # blink logic
@@ -517,7 +517,7 @@ def setExpression(mode):
 
     # ----------------------------------------------------- PROCESSING ----------------------------
 
-        
+
     if(mode==Expression.PROCESSING):
         display.blit(print1,(0,0))
         pygame.display.flip()
@@ -527,12 +527,12 @@ def setExpression(mode):
     if(mode==Expression.PRINTGOING):
         t_end = time.time() + 1.5 #how long to show random processing face
         while time.time() < t_end:
-           
+
             # Happy Printy face
             display.blit(print1,(0,0))
             pygame.display.flip()
             time.sleep(.1)
-        
+
             display.blit(print4,(0,0))
             pygame.display.flip()
             time.sleep(.1)
@@ -541,13 +541,13 @@ def setExpression(mode):
         while time.time() < t_end:
 
             printFlip = random.choice([True, False])
-           
+
             if(printFlip):
                 # Happy Printy face
                 display.blit(print2,(0,0))
                 pygame.display.flip()
                 time.sleep(.1)
-            
+
                 display.blit(print3,(0,0))
                 pygame.display.flip()
                 time.sleep(.1)
@@ -565,17 +565,17 @@ def setExpression(mode):
         lastWildTime = time.time()
 
     # ----------------------------------------------------- LAUGHING ----------------------------
-    
+
     if(mode==Expression.LAUGHING):
             laughQuirk.play()
             t_end = time.time() + 2 #how long to show laugh flipper
             while time.time() < t_end:
-           
+
                 # Happy Printy face
                 display.blit(print1,(0,0))
                 pygame.display.flip()
                 time.sleep(.1)
-            
+
                 display.blit(print4,(0,0))
                 pygame.display.flip()
                 time.sleep(.1)
@@ -586,9 +586,9 @@ def setExpression(mode):
     if(mode==Expression.FACEDOWN):
 
         isFaceDown = True
-        
+
         while isFaceDown:
-           
+
             sdInit.play()
             display.blit(f_Hmmm,(0,0))
             pygame.display.flip()
@@ -600,13 +600,13 @@ appRunning = True
 
 while appRunning == True:
     try:
-            
+
         # Switch to camera mode if face is showing, and someone presses button
         if (botMode == BotMode.FACE) & shutterButton.is_pressed:
             botMode = BotMode.CAMERA
         else:
             botMode = BotMode.FACE
-            
+
         if (botMode == BotMode.FACE):
             setExpression(Expression.AWAKE)
         else:
@@ -617,9 +617,9 @@ while appRunning == True:
             captureImage()
             processImage()
             printSelfie(True)
-            
+
             botMode = BotMode.FACE
-            
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
